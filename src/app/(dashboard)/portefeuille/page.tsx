@@ -11,6 +11,7 @@ import { Disclaimer } from "@/components/disclaimer"
 import { ImportForm } from "./import-form"
 import { HoldingsTable } from "./holdings-table"
 import { ThemeAllocation } from "./theme-allocation"
+import { AutoClassifyButton } from "./auto-classify-button"
 
 export const metadata = { title: "Portefeuille — Liquidity Lens" }
 
@@ -131,6 +132,10 @@ export default async function PortefeuillePage() {
           ⚠ {fxNote}
         </p>
       )}
+
+      <AutoClassifyButton
+        unclassifiedCount={holdings.filter((h) => !h.theme_id).length}
+      />
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
