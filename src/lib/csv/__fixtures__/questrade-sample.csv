@@ -1,0 +1,7 @@
+Numéro de compte;Devise du compte;Symbole;Description;Quantité;Coût unitaire moyen;Valeur d'acquisition;Prix du marché;Variation du jour $;Variation du jour %;Valeur marchande;Variation du jour;Intérêt couru;Gain/Perte Non réalisé;Gain/Perte Non réalisé %;Valeur d'emprunt
+"ACCT_CAD_001";CAD;BABA;"ALIBABA GROUP HOLDING-ADR";"10";"100.00000";"1000.00";"150.00000";"-0.30000";"-0.20%";"1500.00";"-3.00";;"500.00";"50.00%";"1050.00"
+"ACCT_CAD_001";CAD;ACB;"AURORA CANNABIS INC-NEW";"100";"5.00000";"500.00";"2.00000";"-0.04000";"-2.00%";"200.00";"-4.00";;"-300.00";"-60.00%";"100.00"
+"ACCT_CAD_001";CAD;"ETHX.B";"CI GALAXY ETHEREUM C$UNHD";"50";"10.00000";"500.00";"12.00000";"-0.20000";"-1.64%";"600.00";"-10.00";;"100.00";"20.00%";"0.00"
+"ACCT_CAD_001";CAD;HIVE;"HIVE DIGITAL TECHS LTD";"50";"2.00000";"100.00";"6.00000";"0.10000";"1.70%";"300.00";"5.00";;"200.00";"200.00%";"150.00"
+"ACCT_CAD_001";CAD;PQEFF;"PETROTEQ ENERGY INC (synthetic zombie)";"5000";"0.08000";"400.00";"0.00008";;;"0.00";;;"-400.00";"-100.00%";"0.00"
+"ACCT_USD_001";USD;ARKX;"ARK SPACE EXPL&INNOV ETF";"20";"25.00000";"500.00";"40.00000";"1.00000";"2.50%";"800.00";"20.00";;"300.00";"60.00%";"500.00"
