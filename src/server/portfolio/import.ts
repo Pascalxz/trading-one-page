@@ -3,20 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { parseQuestradeCsv } from "@/lib/csv/adapters/questrade"
-
-export type ImportState = {
-  status: "idle" | "ok" | "error"
-  message?: string
-  imported?: {
-    accounts: number
-    holdings: number
-    zombies: number
-    warnings: string[]
-  }
-}
-
-const initialState: ImportState = { status: "idle" }
-export { initialState as importInitialState }
+import type { ImportState } from "./import-types"
 
 export async function importQuestradeCsvAction(
   _prev: ImportState,

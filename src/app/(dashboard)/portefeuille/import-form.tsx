@@ -1,11 +1,8 @@
 "use client"
 
 import { useActionState, useRef } from "react"
-import {
-  importQuestradeCsvAction,
-  importInitialState,
-  type ImportState,
-} from "@/server/portfolio/import"
+import { importQuestradeCsvAction } from "@/server/portfolio/import"
+import { importInitialState, type ImportState } from "@/server/portfolio/import-types"
 
 export function ImportForm() {
   const [state, formAction, pending] = useActionState<ImportState, FormData>(
