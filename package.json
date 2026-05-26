@@ -29,6 +29,7 @@
     "happy-dom": "^20.9.0",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vercel": "^54.4.1",
     "vitest": "^4.1.7"
   }
 }
