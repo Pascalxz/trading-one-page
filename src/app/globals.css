@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+/* ────────────────────────────────────────────────────────────
+   Liquidity Lens — direction esthétique « terminal sobre » (PRD §8)
+   Fond sombre profond, accents froids, sémantique stricte gain/perte.
+   ──────────────────────────────────────────────────────────── */
+
+:root {
+  /* Surfaces */
+  --background: #07090c;
+  --surface: #0d1117;
+  --surface-2: #131a23;
+  --border: #1f2933;
+  --border-strong: #2b3744;
+
+  /* Texte */
+  --foreground: #e6edf3;
+  --muted: #8b97a4;
+  --muted-strong: #b1bcc8;
+
+  /* Sémantique stricte */
+  --gain: #2ecc71;
+  --loss: #f0586a;
+
+  /* Accent unique (macro / interactif) */
+  --accent: #f5b454;       /* ambre froid */
+  --accent-soft: #f5b45433;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-strong: var(--muted-strong);
+  --color-gain: var(--gain);
+  --color-loss: var(--loss);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+
+  --font-sans: var(--font-display);
+  --font-mono: var(--font-mono-data);
+}
+
+html, body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+body {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
+}
+
+/* Scrollbar discrète */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
