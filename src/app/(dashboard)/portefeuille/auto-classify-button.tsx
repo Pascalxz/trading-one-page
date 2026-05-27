@@ -23,10 +23,27 @@ export function AutoClassifyButton({ unclassifiedCount }: { unclassifiedCount: n
           )}
         </p>
         {result?.ok && (
-          <p className="mt-1 text-[11px] text-gain">
-            {result.classified} classifiée{result.classified > 1 ? "s" : ""}.{" "}
-            {result.unknown > 0 && `${result.unknown} inconnue${result.unknown > 1 ? "s" : ""} (à classer manuellement).`}
-          </p>
+          <div className="mt-1 space-y-0.5 text-[11px]">
+            <p className="text-gain">
+              {result.classified} classifiée{result.classified > 1 ? "s" : ""}
+              {result.classified_ai > 0 && (
+                <span className="text-muted ml-1">
+                  ({result.classified_rule} par règle, {result.classified_ai} via IA)
+                </span>
+              )}
+            </p>
+            {result.unknown > 0 && (
+              <p className="text-muted-strong">
+                {result.unknown} inconnue{result.unknown > 1 ? "s" : ""} (à classer manuellement).
+              </p>
+            )}
+            {result.ai_cost_usd !== undefined && result.ai_cost_usd > 0 && (
+              <p className="text-muted">Coût IA : ${result.ai_cost_usd.toFixed(4)} USD</p>
+            )}
+            {result.ai_error && (
+              <p className="text-loss">Fallback IA en échec : {result.ai_error}</p>
+            )}
+          </div>
         )}
         {result && !result.ok && (
           <p className="mt-1 text-[11px] text-loss">{result.error}</p>

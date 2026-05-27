@@ -5,14 +5,21 @@ import { SeriesChart } from "./series-chart"
 export const metadata = { title: "Macro — Liquidity Lens" }
 
 const SERIES_COLOR: Record<string, string> = {
-  "fred:M2SL":     "#f5b454", // accent ambre
-  "fred:CPIAUCSL": "#f0586a", // rouge (inflation)
-  "fred:DFEDTARU": "#22d3ee", // cyan
-  "fred:DFEDTARL": "#0891b2",
-  "fred:WALCL":    "#a78bfa",
+  "derived:m2_global": "#fbbf24", // ambre vif (vedette)
+  "fred:M2SL":         "#f5b454", // accent ambre
+  "fred:CPIAUCSL":     "#f0586a", // rouge (inflation)
+  "fred:DFEDTARU":     "#22d3ee", // cyan
+  "fred:DFEDTARL":     "#0891b2",
+  "fred:WALCL":        "#a78bfa",
 }
 
-const ORDER = ["fred:M2SL", "fred:CPIAUCSL", "fred:DFEDTARU", "fred:WALCL"]
+const ORDER = [
+  "derived:m2_global",
+  "fred:M2SL",
+  "fred:CPIAUCSL",
+  "fred:DFEDTARU",
+  "fred:WALCL",
+]
 
 export default async function MacroPage() {
   const { series, upcomingEvents } = await fetchMacroOverview()

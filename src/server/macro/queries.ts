@@ -33,12 +33,24 @@ export async function fetchMacroOverview(): Promise<{
   since.setFullYear(since.getFullYear() - 5)
   const sinceIso = since.toISOString().slice(0, 10)
 
+  // Séries à afficher : les 5 du dashboard macro + le M2 global dérivé.
+  // On exclut explicitement les composants non-US (M3 EZ/UK, M2 JP/CN) et
+  // les séries FX qui ne servent qu'au calcul du M2 global.
+  const displayKeys = [
+    "derived:m2_global",
+    "fred:M2SL",
+    "fred:CPIAUCSL",
+    "fred:DFEDTARU",
+    "fred:DFEDTARL",
+    "fred:WALCL",
+  ]
+
   const [{ data: seriesRows }, { data: pointsRows }, { data: eventsRows }] =
     await Promise.all([
       supabase
         .from("macro_series")
         .select("id, key, label, unit, frequency")
-        .eq("source", "fred")
+        .in("key", displayKeys)
         .order("key"),
       supabase
         .from("macro_points")
