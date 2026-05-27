@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { Disclaimer } from "@/components/disclaimer"
+import { BriefingCard } from "./briefing-card"
 
 export const metadata = { title: "Accueil — Liquidity Lens" }
 
@@ -7,38 +8,58 @@ export default async function DashboardHome() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ count: holdingsCount }, { count: alertsCount }, { data: themes }] =
-    await Promise.all([
-      supabase.from("holdings").select("*", { count: "exact", head: true }),
-      supabase
-        .from("alerts")
-        .select("*", { count: "exact", head: true })
-        .eq("is_active", true),
-      supabase
-        .from("themes")
-        .select("slug, name, color")
-        .order("sort_order", { ascending: true }),
-    ])
+  const today = new Date().toISOString().slice(0, 10)
+
+  const [
+    { count: holdingsCount },
+    { count: alertsCount },
+    { data: themes },
+    { data: briefing },
+  ] = await Promise.all([
+    supabase.from("holdings").select("*", { count: "exact", head: true }),
+    supabase
+      .from("alerts")
+      .select("*", { count: "exact", head: true })
+      .eq("is_active", true),
+    supabase
+      .from("themes")
+      .select("slug, name, color")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("briefings")
+      .select("content, for_date")
+      .eq("for_date", today)
+      .maybeSingle(),
+  ])
+
+  const hasHoldings = (holdingsCount ?? 0) > 0
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 space-y-8">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent mb-2">
-          Phase 0 — Fondations
+          Accueil
         </p>
         <h1 className="text-3xl font-semibold tracking-tight">
-          Bienvenue{user?.email ? `, ${user.email}` : ""}.
+          {user?.email ? `${user.email.split("@")[0]},` : ""} voici le tableau
+          de bord.
         </h1>
         <p className="mt-2 text-muted">
-          Ton compte est créé et isolé par RLS. Les piliers Portefeuille / Macro /
-          Projets et les modes IA arrivent dans les phases suivantes.
+          Portefeuille consolidé, macro suivie, projets crypto en regard, et un
+          briefing IA quotidien.
         </p>
       </header>
 
+      <BriefingCard
+        initialContent={briefing?.content ?? null}
+        initialDate={briefing?.for_date ?? null}
+        hasHoldings={hasHoldings}
+      />
+
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Tile label="Positions" value={holdingsCount ?? 0} hint="Phase 1 — import CSV" />
-        <Tile label="Alertes actives" value={alertsCount ?? 0} hint="Phase 4 — IA" />
-        <Tile label="Thèmes" value={themes?.length ?? 0} hint="Défauts seedés" />
+        <Tile label="Positions" value={holdingsCount ?? 0} hint="Onglet Portefeuille" />
+        <Tile label="Alertes actives" value={alertsCount ?? 0} hint="Phase 4 IA — bientôt" />
+        <Tile label="Thèmes" value={themes?.length ?? 0} hint="Personnalisables" />
       </section>
 
       {themes && themes.length > 0 && (
