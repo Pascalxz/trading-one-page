@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { Disclaimer } from "@/components/disclaimer"
+import { fetchRecentAlertEvents } from "@/server/alerts/queries"
 import { BriefingCard } from "./briefing-card"
+import { AlertsCard } from "./alerts-card"
 
 export const metadata = { title: "Accueil — Liquidity Lens" }
 
@@ -15,6 +17,7 @@ export default async function DashboardHome() {
     { count: alertsCount },
     { data: themes },
     { data: briefing },
+    alertEvents,
   ] = await Promise.all([
     supabase.from("holdings").select("*", { count: "exact", head: true }),
     supabase
@@ -30,6 +33,7 @@ export default async function DashboardHome() {
       .select("content, for_date")
       .eq("for_date", today)
       .maybeSingle(),
+    fetchRecentAlertEvents(20),
   ])
 
   const hasHoldings = (holdingsCount ?? 0) > 0
@@ -56,9 +60,11 @@ export default async function DashboardHome() {
         hasHoldings={hasHoldings}
       />
 
+      <AlertsCard events={alertEvents} />
+
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Tile label="Positions" value={holdingsCount ?? 0} hint="Onglet Portefeuille" />
-        <Tile label="Alertes actives" value={alertsCount ?? 0} hint="Phase 4 IA — bientôt" />
+        <Tile label="Alertes actives" value={alertsCount ?? 0} hint="Onglet Réglages" />
         <Tile label="Thèmes" value={themes?.length ?? 0} hint="Personnalisables" />
       </section>
 
