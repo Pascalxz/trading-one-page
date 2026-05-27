@@ -74,30 +74,34 @@ export async function computeAndStoreM2Global(
   }
 
   // 3) Charge tous les points des composants + FX
-  const [{ data: compPoints }, { data: fxPoints }] = await Promise.all([
-    supabase
-      .from("macro_points")
-      .select("series_id, observed_at, value")
-      .in("series_id", componentIds)
-      .order("observed_at", { ascending: true }),
-    supabase
-      .from("macro_points")
-      .select("series_id, observed_at, value")
-      .in("series_id", fxIds)
-      .order("observed_at", { ascending: true }),
-  ])
-
-  // Index par key
+  //    Supabase REST cap à 1000 lignes/requête → on pagine par série en parallèle.
+  const allKeys = [...COMPONENT_KEYS, ...FX_KEYS] as const
   const pointsByKey = new Map<string, Point[]>()
-  for (const k of [...COMPONENT_KEYS, ...FX_KEYS]) pointsByKey.set(k, [])
-  for (const p of compPoints ?? []) {
-    const key = keyForId(idByKey, p.series_id)
-    if (key) pointsByKey.get(key)!.push({ observed_at: p.observed_at, value: Number(p.value) })
-  }
-  for (const p of fxPoints ?? []) {
-    const key = keyForId(idByKey, p.series_id)
-    if (key) pointsByKey.get(key)!.push({ observed_at: p.observed_at, value: Number(p.value) })
-  }
+  for (const k of allKeys) pointsByKey.set(k, [])
+
+  await Promise.all(
+    allKeys.map(async (key) => {
+      const id = idByKey.get(key)
+      if (!id) return
+      const acc: Point[] = []
+      const PAGE = 1000
+      let from = 0
+      while (true) {
+        const { data, error } = await supabase
+          .from("macro_points")
+          .select("observed_at, value")
+          .eq("series_id", id)
+          .order("observed_at", { ascending: true })
+          .range(from, from + PAGE - 1)
+        if (error) return
+        if (!data || data.length === 0) break
+        for (const p of data) acc.push({ observed_at: p.observed_at, value: Number(p.value) })
+        if (data.length < PAGE) break
+        from += PAGE
+      }
+      pointsByKey.set(key, acc)
+    }),
+  )
 
   // Composants manquants
   const missing = COMPONENT_KEYS.filter((k) => (pointsByKey.get(k)?.length ?? 0) === 0)
@@ -221,9 +225,3 @@ function pickClosest(points: Point[], date: string): number | null {
   return best.value
 }
 
-function keyForId(idByKey: Map<string, string>, id: string): string | undefined {
-  for (const [k, v] of idByKey.entries()) {
-    if (v === id) return k
-  }
-  return undefined
-}
