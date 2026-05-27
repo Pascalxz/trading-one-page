@@ -38,18 +38,24 @@ export default async function DashboardLayout({
 
   return (
     <>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-[#1a1206]"
+      >
+        Aller au contenu principal
+      </a>
       <header className="border-b border-border bg-surface/40 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-10">
-            <Link href="/dashboard">
+            <Link href="/dashboard" aria-label="Accueil Liquidity Lens">
               <Brand size="sm" />
             </Link>
-            <nav className="flex items-center gap-1 text-sm">
+            <nav aria-label="Navigation principale" className="flex items-center gap-1 text-sm">
               {NAV.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="px-3 py-1.5 rounded-md text-muted-strong hover:text-foreground hover:bg-surface-2 transition-colors"
+                  className="px-3 py-1.5 rounded-md text-muted-strong hover:text-foreground hover:bg-surface-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   {item.label}
                 </Link>
@@ -57,7 +63,7 @@ export default async function DashboardLayout({
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted">
+            <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted" aria-label="Devise de référence">
               {profile?.base_currency ?? "CAD"}
             </span>
             <span className="text-sm text-muted-strong">{label}</span>
@@ -65,7 +71,7 @@ export default async function DashboardLayout({
           </div>
         </div>
       </header>
-      <main className="flex-1">{children}</main>
+      <main id="main-content" className="flex-1">{children}</main>
       <Disclaimer />
     </>
   )
