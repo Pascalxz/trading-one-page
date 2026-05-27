@@ -9,6 +9,7 @@ import { fetchFredObservations, type FredObservation } from "@/lib/sources/fred"
 import { requireEnv, optionalEnv } from "@/lib/env"
 import type { Database } from "@/lib/types/database"
 import { computeAndStoreM2Global, type M2GlobalResult } from "./m2-global"
+import { computeAndStoreNetLiquidity, type NetLiquidityResult } from "./net-liquidity"
 
 export type MacroRefreshResult = {
   ok: boolean
@@ -21,6 +22,7 @@ export type MacroRefreshResult = {
   totalInserted: number
   durationMs: number
   m2_global?: M2GlobalResult
+  net_liquidity?: NetLiquidityResult
 }
 
 /**
@@ -80,8 +82,7 @@ export async function refreshMacroSeries(): Promise<MacroRefreshResult> {
     }
   }
 
-  // Calcul de la série dérivée M2 global après le fetch FRED (best-effort —
-  // n'échoue pas tout le refresh si le calcul plante).
+  // Séries dérivées (best-effort, n'échoue pas tout le refresh si une plante).
   let m2Global: M2GlobalResult | undefined
   try {
     m2Global = await computeAndStoreM2Global(supabase)
@@ -94,12 +95,28 @@ export async function refreshMacroSeries(): Promise<MacroRefreshResult> {
     }
   }
 
+  let netLiquidity: NetLiquidityResult | undefined
+  try {
+    netLiquidity = await computeAndStoreNetLiquidity(supabase)
+  } catch (e) {
+    netLiquidity = {
+      ok: false,
+      computed_points: 0,
+      missing_components: [],
+      error: e instanceof Error ? e.message : "net_liquidity compute error",
+    }
+  }
+
   return {
-    ok: results.every((r) => !r.error) && (m2Global?.ok ?? true),
+    ok:
+      results.every((r) => !r.error) &&
+      (m2Global?.ok ?? true) &&
+      (netLiquidity?.ok ?? true),
     series: results,
     totalInserted,
     durationMs: Date.now() - start,
     m2_global: m2Global,
+    net_liquidity: netLiquidity,
   }
 }
 

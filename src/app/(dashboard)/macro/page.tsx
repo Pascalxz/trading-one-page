@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server"
-import { fetchMacroOverview, isStale } from "@/server/macro/queries"
+import { fetchMacroOverview, isStale, type MacroSeriesData } from "@/server/macro/queries"
 import { Disclaimer } from "@/components/disclaimer"
 import { SeriesChart } from "./series-chart"
 
@@ -9,21 +9,52 @@ export async function generateMetadata() {
 }
 
 const SERIES_COLOR: Record<string, string> = {
-  "derived:m2_global": "#fbbf24",
-  "fred:M2SL":         "#f5b454",
-  "fred:CPIAUCSL":     "#f0586a",
-  "fred:DFEDTARU":     "#22d3ee",
-  "fred:DFEDTARL":     "#0891b2",
-  "fred:WALCL":        "#a78bfa",
+  // Liquidité — palette ambre / orange / pourpre
+  "derived:m2_global":     "#fbbf24",
+  "derived:net_liquidity": "#f59e0b",
+  "fred:WALCL":            "#a78bfa",
+  "fred:WTREGEN":          "#fb7185",
+  "fred:RRPONTSYD":        "#f472b6",
+  "fred:M2SL":             "#f5b454",
+  // Inflation & taux — palette rouge / cyan
+  "fred:CPIAUCSL":         "#f0586a",
+  "fred:DFEDTARU":         "#22d3ee",
+  "fred:DGS10":            "#34d399",
+  "fred:DGS2":             "#10b981",
+  "fred:T10Y2Y":           "#60a5fa",
+  // Dollar, or, conditions — palette neutre + or
+  "fred:DTWEXBGS":         "#94a3b8",
+  "fred:GOLDAMGBD228NLBM": "#facc15",
+  "fred:NFCI":             "#c084fc",
 }
 
-const ORDER = [
-  "derived:m2_global",
-  "fred:M2SL",
-  "fred:CPIAUCSL",
-  "fred:DFEDTARU",
-  "fred:WALCL",
-]
+const SECTIONS = [
+  {
+    titleKey: "sectionLiquidity",
+    keys: [
+      "derived:m2_global",
+      "derived:net_liquidity",
+      "fred:WALCL",
+      "fred:WTREGEN",
+      "fred:RRPONTSYD",
+      "fred:M2SL",
+    ],
+  },
+  {
+    titleKey: "sectionRates",
+    keys: [
+      "fred:CPIAUCSL",
+      "fred:DFEDTARU",
+      "fred:DGS10",
+      "fred:DGS2",
+      "fred:T10Y2Y",
+    ],
+  },
+  {
+    titleKey: "sectionDollarGold",
+    keys: ["fred:DTWEXBGS", "fred:GOLDAMGBD228NLBM", "fred:NFCI"],
+  },
+] as const
 
 export default async function MacroPage() {
   const t = await getTranslations("macro")
@@ -31,18 +62,13 @@ export default async function MacroPage() {
   const localeStr = locale === "fr" ? "fr-CA" : "en-CA"
 
   const { series, upcomingEvents } = await fetchMacroOverview()
-
-  const sorted = [...series].sort(
-    (a, b) =>
-      (ORDER.indexOf(a.key) === -1 ? 99 : ORDER.indexOf(a.key)) -
-      (ORDER.indexOf(b.key) === -1 ? 99 : ORDER.indexOf(b.key)),
-  )
+  const byKey = new Map(series.map((s) => [s.key, s]))
 
   const totalPoints = series.reduce((s, x) => s + x.points.length, 0)
   const noData = totalPoints === 0
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10 space-y-8">
+    <div className="mx-auto max-w-7xl px-6 py-10 space-y-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent mb-2">
@@ -67,25 +93,37 @@ export default async function MacroPage() {
         </div>
       )}
 
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {sorted.map((s) => (
-          <SeriesCard
-            key={s.key}
-            label={s.label}
-            unit={s.unit}
-            frequency={s.frequency}
-            points={s.points}
-            latestDate={s.latest?.date ?? null}
-            latestValue={s.latest?.value ?? null}
-            yoyPct={s.yoyPct}
-            color={SERIES_COLOR[s.key] ?? "#f5b454"}
-            stale={isStale(s.latest)}
-            staleLabel={t("stale")}
-            yoyTemplate={t.markup}
-            locale={localeStr}
-          />
-        ))}
-      </section>
+      {SECTIONS.map((section) => {
+        const sectionSeries = section.keys
+          .map((k) => byKey.get(k))
+          .filter((s): s is MacroSeriesData => Boolean(s))
+        if (sectionSeries.length === 0) return null
+        return (
+          <section key={section.titleKey} className="space-y-4">
+            <h2 className="text-xs font-mono uppercase tracking-[0.22em] text-muted-strong border-b border-border pb-2">
+              {t(section.titleKey)}
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {sectionSeries.map((s) => (
+                <SeriesCard
+                  key={s.key}
+                  label={s.label}
+                  unit={s.unit}
+                  frequency={s.frequency}
+                  points={s.points}
+                  latestDate={s.latest?.date ?? null}
+                  latestValue={s.latest?.value ?? null}
+                  yoyPct={s.yoyPct}
+                  color={SERIES_COLOR[s.key] ?? "#f5b454"}
+                  stale={isStale(s.latest)}
+                  staleLabel={t("stale")}
+                  locale={localeStr}
+                />
+              ))}
+            </div>
+          </section>
+        )
+      })}
 
       <section className="rounded-lg border border-border bg-surface/40 p-5">
         <h2 className="text-xs font-mono uppercase tracking-[0.22em] text-muted mb-4">
@@ -117,7 +155,8 @@ export default async function MacroPage() {
                       year: "numeric",
                     })}
                     <span className="ml-2 text-accent">
-                      {locale === "fr" ? "J-" : "T-"}{days}
+                      {locale === "fr" ? "J-" : "T-"}
+                      {days}
                     </span>
                   </span>
                 </li>
@@ -155,7 +194,6 @@ function SeriesCard({
   color: string
   stale: boolean
   staleLabel: string
-  yoyTemplate?: unknown
   locale: string
 }) {
   const fmt = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 })

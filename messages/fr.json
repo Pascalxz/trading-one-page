@@ -149,7 +149,10 @@
     "stale": "stale",
     "yoy": "{value} % YoY",
     "upcomingTitle": "Prochains catalyseurs",
-    "upcomingNone": "Aucun événement à venir."
+    "upcomingNone": "Aucun événement à venir.",
+    "sectionLiquidity": "Liquidité",
+    "sectionRates": "Inflation & taux",
+    "sectionDollarGold": "Dollar, or & conditions financières"
   },
   "projects": {
     "kicker": "Projets",
