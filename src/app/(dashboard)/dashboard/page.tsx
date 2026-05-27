@@ -1,16 +1,21 @@
+import { getTranslations } from "next-intl/server"
 import { createClient } from "@/lib/supabase/server"
 import { Disclaimer } from "@/components/disclaimer"
 import { fetchRecentAlertEvents } from "@/server/alerts/queries"
 import { BriefingCard } from "./briefing-card"
 import { AlertsCard } from "./alerts-card"
 
-export const metadata = { title: "Accueil — Liquidity Lens" }
+export async function generateMetadata() {
+  const t = await getTranslations("dashboard")
+  return { title: `${t("kicker")} — Liquidity Lens` }
+}
 
 export default async function DashboardHome() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const today = new Date().toISOString().slice(0, 10)
+  const t = await getTranslations("dashboard")
 
   const [
     { count: holdingsCount },
@@ -37,21 +42,18 @@ export default async function DashboardHome() {
   ])
 
   const hasHoldings = (holdingsCount ?? 0) > 0
+  const name = user?.email ? user.email.split("@")[0] : null
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 space-y-8">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent mb-2">
-          Accueil
+          {t("kicker")}
         </p>
         <h1 className="text-3xl font-semibold tracking-tight">
-          {user?.email ? `${user.email.split("@")[0]},` : ""} voici le tableau
-          de bord.
+          {name ? t("welcome", { name }) : t("welcomeAnon")}
         </h1>
-        <p className="mt-2 text-muted">
-          Portefeuille consolidé, macro suivie, projets crypto en regard, et un
-          briefing IA quotidien.
-        </p>
+        <p className="mt-2 text-muted">{t("intro")}</p>
       </header>
 
       <BriefingCard
@@ -63,27 +65,27 @@ export default async function DashboardHome() {
       <AlertsCard events={alertEvents} />
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Tile label="Positions" value={holdingsCount ?? 0} hint="Onglet Portefeuille" />
-        <Tile label="Alertes actives" value={alertsCount ?? 0} hint="Onglet Réglages" />
-        <Tile label="Thèmes" value={themes?.length ?? 0} hint="Personnalisables" />
+        <Tile label={t("tilePositions")} value={holdingsCount ?? 0} hint={t("tilePositionsHint")} />
+        <Tile label={t("tileAlertsActive")} value={alertsCount ?? 0} hint={t("tileAlertsHint")} />
+        <Tile label={t("tileThemes")} value={themes?.length ?? 0} hint={t("tileThemesHint")} />
       </section>
 
       {themes && themes.length > 0 && (
         <section className="rounded-lg border border-border bg-surface/40 p-5">
           <h2 className="text-xs font-mono uppercase tracking-[0.22em] text-muted mb-4">
-            Thèmes de classification
+            {t("themesTitle")}
           </h2>
           <div className="flex flex-wrap gap-2">
-            {themes.map((t) => (
+            {themes.map((th) => (
               <span
-                key={t.slug}
+                key={th.slug}
                 className="inline-flex items-center gap-2 rounded-full border border-border-strong bg-surface-2 px-3 py-1 text-xs"
               >
                 <span
                   className="inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: t.color }}
+                  style={{ backgroundColor: th.color }}
                 />
-                <span className="text-muted-strong">{t.name}</span>
+                <span className="text-muted-strong">{th.name}</span>
               </span>
             ))}
           </div>

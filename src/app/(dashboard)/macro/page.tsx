@@ -1,14 +1,18 @@
+import { getLocale, getTranslations } from "next-intl/server"
 import { fetchMacroOverview, isStale } from "@/server/macro/queries"
 import { Disclaimer } from "@/components/disclaimer"
 import { SeriesChart } from "./series-chart"
 
-export const metadata = { title: "Macro — Liquidity Lens" }
+export async function generateMetadata() {
+  const t = await getTranslations("macro")
+  return { title: `${t("kicker")} — Liquidity Lens` }
+}
 
 const SERIES_COLOR: Record<string, string> = {
-  "derived:m2_global": "#fbbf24", // ambre vif (vedette)
-  "fred:M2SL":         "#f5b454", // accent ambre
-  "fred:CPIAUCSL":     "#f0586a", // rouge (inflation)
-  "fred:DFEDTARU":     "#22d3ee", // cyan
+  "derived:m2_global": "#fbbf24",
+  "fred:M2SL":         "#f5b454",
+  "fred:CPIAUCSL":     "#f0586a",
+  "fred:DFEDTARU":     "#22d3ee",
   "fred:DFEDTARL":     "#0891b2",
   "fred:WALCL":        "#a78bfa",
 }
@@ -22,11 +26,16 @@ const ORDER = [
 ]
 
 export default async function MacroPage() {
+  const t = await getTranslations("macro")
+  const locale = await getLocale()
+  const localeStr = locale === "fr" ? "fr-CA" : "en-CA"
+
   const { series, upcomingEvents } = await fetchMacroOverview()
 
   const sorted = [...series].sort(
-    (a, b) => (ORDER.indexOf(a.key) === -1 ? 99 : ORDER.indexOf(a.key))
-            - (ORDER.indexOf(b.key) === -1 ? 99 : ORDER.indexOf(b.key)),
+    (a, b) =>
+      (ORDER.indexOf(a.key) === -1 ? 99 : ORDER.indexOf(a.key)) -
+      (ORDER.indexOf(b.key) === -1 ? 99 : ORDER.indexOf(b.key)),
   )
 
   const totalPoints = series.reduce((s, x) => s + x.points.length, 0)
@@ -37,30 +46,23 @@ export default async function MacroPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent mb-2">
-            Macro
+            {t("kicker")}
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Liquidité, prix, taux directeurs
-          </h1>
-          <p className="mt-2 text-muted max-w-xl">
-            Données FRED (Federal Reserve Bank of St. Louis). Rafraîchissement
-            quotidien à 06:00 UTC. M2 global agrégé reporté à la prochaine
-            itération.
-          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
+          <p className="mt-2 text-muted max-w-xl">{t("intro")}</p>
         </div>
       </header>
 
       {noData && (
         <div className="rounded-lg border border-loss/30 bg-loss/5 p-5 text-sm">
           <p className="font-mono text-xs uppercase tracking-[0.22em] text-loss mb-2">
-            Aucune donnée macro
+            {t("noDataTitle")}
           </p>
           <p className="text-muted-strong">
-            Le cron quotidien n&apos;a pas encore tourné, ou la variable{" "}
-            <code className="font-mono text-accent">FRED_API_KEY</code> n&apos;est
-            pas configurée. Tu peux déclencher un rafraîchissement manuel via{" "}
-            <code className="font-mono">GET /api/cron/macro</code> après avoir
-            ajouté la clé.
+            {t.rich("noDataHelp", {
+              key: () => <code className="font-mono text-accent">FRED_API_KEY</code>,
+              path: () => <code className="font-mono">GET /api/cron/macro</code>,
+            })}
           </p>
         </div>
       )}
@@ -78,16 +80,19 @@ export default async function MacroPage() {
             yoyPct={s.yoyPct}
             color={SERIES_COLOR[s.key] ?? "#f5b454"}
             stale={isStale(s.latest)}
+            staleLabel={t("stale")}
+            yoyTemplate={t.markup}
+            locale={localeStr}
           />
         ))}
       </section>
 
       <section className="rounded-lg border border-border bg-surface/40 p-5">
         <h2 className="text-xs font-mono uppercase tracking-[0.22em] text-muted mb-4">
-          Prochains catalyseurs
+          {t("upcomingTitle")}
         </h2>
         {upcomingEvents.length === 0 ? (
-          <p className="text-sm text-muted">Aucun événement à venir.</p>
+          <p className="text-sm text-muted">{t("upcomingNone")}</p>
         ) : (
           <ul className="divide-y divide-border/60">
             {upcomingEvents.map((e) => {
@@ -106,8 +111,14 @@ export default async function MacroPage() {
                   </span>
                   <span className="text-foreground">{e.title}</span>
                   <span className="font-mono tabular-nums text-xs text-muted text-right">
-                    {date.toLocaleDateString("fr-CA", { day: "2-digit", month: "short", year: "numeric" })}
-                    <span className="ml-2 text-accent">J-{days}</span>
+                    {date.toLocaleDateString(localeStr, {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                    <span className="ml-2 text-accent">
+                      {locale === "fr" ? "J-" : "T-"}{days}
+                    </span>
                   </span>
                 </li>
               )
@@ -131,6 +142,8 @@ function SeriesCard({
   yoyPct,
   color,
   stale,
+  staleLabel,
+  locale,
 }: {
   label: string
   unit: string | null
@@ -141,8 +154,11 @@ function SeriesCard({
   yoyPct: number | null
   color: string
   stale: boolean
+  staleLabel: string
+  yoyTemplate?: unknown
+  locale: string
 }) {
-  const fmt = new Intl.NumberFormat("fr-CA", { maximumFractionDigits: 2 })
+  const fmt = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 })
   return (
     <div className="rounded-lg border border-border bg-surface/40 p-5">
       <header className="flex items-start justify-between mb-3 gap-3">
@@ -163,13 +179,17 @@ function SeriesCard({
                 yoyPct > 0 ? "text-gain" : yoyPct < 0 ? "text-loss" : "text-muted-strong"
               }`}
             >
-              {yoyPct > 0 ? "+" : ""}{yoyPct.toFixed(2)} % YoY
+              {yoyPct > 0 ? "+" : ""}
+              {yoyPct.toFixed(2)} % YoY
             </p>
           )}
           {latestDate && (
             <p className="text-[11px] text-muted mt-1">
-              {new Date(latestDate).toLocaleDateString("fr-CA", { month: "short", year: "numeric" })}
-              {stale && <span className="ml-1 text-loss">· stale</span>}
+              {new Date(latestDate).toLocaleDateString(locale, {
+                month: "short",
+                year: "numeric",
+              })}
+              {stale && <span className="ml-1 text-loss">· {staleLabel}</span>}
             </p>
           )}
           {frequency && (

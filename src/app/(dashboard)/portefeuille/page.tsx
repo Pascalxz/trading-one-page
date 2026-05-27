@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import { fetchPortfolio } from "@/server/portfolio/queries"
 import {
   computeTotals,
@@ -13,15 +14,15 @@ import { HoldingsTable } from "./holdings-table"
 import { ThemeAllocation } from "./theme-allocation"
 import { AutoClassifyButton } from "./auto-classify-button"
 
-export const metadata = { title: "Portefeuille — Liquidity Lens" }
+export async function generateMetadata() {
+  const t = await getTranslations("portfolio")
+  return { title: `${t("kicker")} — Liquidity Lens` }
+}
 
-/**
- * Taux FX placeholder. Source FRED branchée en Phase 2.
- * Visible dans l'UI avec mention « approximatif ».
- */
 const FX_RATES: FxRates = { USDCAD: 1.37, EURCAD: 1.46 }
 
 export default async function PortefeuillePage() {
+  const t = await getTranslations("portfolio")
   const { holdings, themes, baseCurrency, lastImportedAt } = await fetchPortfolio()
 
   if (holdings.length === 0) {
@@ -29,16 +30,10 @@ export default async function PortefeuillePage() {
       <div className="mx-auto max-w-3xl px-6 py-10 space-y-6">
         <header>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent mb-2">
-            Phase 1 — Portefeuille
+            {t("emptyKicker")}
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Importe ton premier portefeuille
-          </h1>
-          <p className="mt-2 text-muted">
-            Glisse-dépose ton export Questrade au format CSV. Multiple comptes
-            et multi-devises supportés ; les positions zombies (perte ≈ -100 %)
-            sont automatiquement repérées.
-          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">{t("emptyTitle")}</h1>
+          <p className="mt-2 text-muted">{t("emptyHelp")}</p>
         </header>
         <ImportForm />
         <Disclaimer variant="inline" />
@@ -60,51 +55,52 @@ export default async function PortefeuillePage() {
   const { items } = withWeights(holdingValues, baseCurrency, FX_RATES)
   const allocations = allocationByTheme(holdingValues, baseCurrency, FX_RATES)
 
-  // Index par symbole pour merger weight + holding row
   const weightBySymbol = new Map(items.map((it) => [it.symbol, it.weight]))
   const rowsWithWeight = holdings.map((h) => ({
     ...h,
     weight: weightBySymbol.get(h.symbol) ?? null,
   }))
 
-  const fxNote =
+  const showFxNote =
     baseCurrency !== "CAD" || holdings.some((h) => h.currency !== "CAD")
-      ? `FX approximatif (USDCAD=${FX_RATES.USDCAD}). Rafraîchissement automatique en phase 2.`
-      : null
+
+  const accountsCount = new Set(holdings.map((h) => h.account_external_id)).size
+  const currencies = [...new Set(holdings.map((h) => h.currency))].join(" / ")
+  const unclassified = holdings.filter((h) => !h.theme_id).length
+  const zombies = holdings.filter((h) => h.is_zombie).length
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10 space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent mb-2">
-            Portefeuille
+            {t("kicker")}
           </p>
           <h1 className="text-3xl font-semibold tracking-tight">
-            {holdings.length} positions
+            {t("headerCount", { count: holdings.length })}
             <span className="text-muted ml-3 text-base font-normal">
-              · {new Set(holdings.map((h) => h.account_external_id)).size} compte(s)
-              · {[...new Set(holdings.map((h) => h.currency))].join(" / ")}
+              · {t("headerAccounts", { count: accountsCount })} · {currencies}
             </span>
           </h1>
         </div>
         <div className="text-right">
           <p className="text-xs font-mono uppercase tracking-[0.2em] text-muted">
-            Dernier import
+            {t("lastImport")}
           </p>
-          <p className="text-sm text-muted-strong">
-            {formatDateTime(lastImportedAt)}
-          </p>
+          <p className="text-sm text-muted-strong">{formatDateTime(lastImportedAt)}</p>
         </div>
       </header>
 
       <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SummaryTile
-          label={`Valeur (${baseCurrency})`}
+          label={t("tileValue", { currency: baseCurrency })}
           primary={formatMoney(totals.totalMarketValue, baseCurrency)}
-          secondary={`Coût : ${formatMoney(totals.totalBookValue, baseCurrency)}`}
+          secondary={t("tileCost", {
+            amount: formatMoney(totals.totalBookValue, baseCurrency),
+          })}
         />
         <SummaryTile
-          label="G/P non réalisé"
+          label={t("tilePnl")}
           primary={formatMoney(totals.totalUnrealizedPnl, baseCurrency)}
           secondary={formatPercent(totals.totalUnrealizedPnlPct)}
           tone={
@@ -116,26 +112,24 @@ export default async function PortefeuillePage() {
           }
         />
         <SummaryTile
-          label="Positions zombies"
-          primary={String(holdings.filter((h) => h.is_zombie).length)}
-          secondary="G/P ≈ -100 %"
+          label={t("tileZombies")}
+          primary={String(zombies)}
+          secondary={t("tileZombiesHint")}
         />
         <SummaryTile
-          label="Thèmes utilisés"
+          label={t("tileThemes")}
           primary={String(allocations.length)}
-          secondary={`${holdings.filter((h) => !h.theme_id).length} sans thème`}
+          secondary={t("tileThemesUnclassified", { count: unclassified })}
         />
       </section>
 
-      {fxNote && (
+      {showFxNote && (
         <p className="text-[11px] text-muted border-l-2 border-border-strong pl-3">
-          ⚠ {fxNote}
+          ⚠ {t("fxNote", { rate: FX_RATES.USDCAD })}
         </p>
       )}
 
-      <AutoClassifyButton
-        unclassifiedCount={holdings.filter((h) => !h.theme_id).length}
-      />
+      <AutoClassifyButton unclassifiedCount={unclassified} />
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
@@ -164,21 +158,12 @@ function SummaryTile({
   tone?: "neutral" | "gain" | "loss"
 }) {
   const toneCls =
-    tone === "gain"
-      ? "text-gain"
-      : tone === "loss"
-        ? "text-loss"
-        : "text-foreground"
+    tone === "gain" ? "text-gain" : tone === "loss" ? "text-loss" : "text-foreground"
   return (
     <div className="rounded-lg border border-border bg-surface/40 p-5">
-      <p className="text-xs font-mono uppercase tracking-[0.22em] text-muted">
-        {label}
-      </p>
-      <p className={`mt-3 font-mono tabular-nums text-2xl ${toneCls}`}>
-        {primary}
-      </p>
+      <p className="text-xs font-mono uppercase tracking-[0.22em] text-muted">{label}</p>
+      <p className={`mt-3 font-mono tabular-nums text-2xl ${toneCls}`}>{primary}</p>
       {secondary && <p className="mt-1 text-xs text-muted-strong">{secondary}</p>}
     </div>
   )
 }
-

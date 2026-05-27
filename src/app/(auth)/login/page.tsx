@@ -1,7 +1,11 @@
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 import { LoginForm } from "./login-form"
 
-export const metadata = { title: "Connexion — Liquidity Lens" }
+export async function generateMetadata() {
+  const t = await getTranslations("auth")
+  return { title: `${t("signInTitle")} — Liquidity Lens` }
+}
 
 type SearchParams = Promise<{ redirect?: string }>
 
@@ -11,17 +15,16 @@ export default async function LoginPage({
   searchParams: SearchParams
 }) {
   const { redirect } = await searchParams
+  const t = await getTranslations("auth")
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight mb-1">Connexion</h1>
-      <p className="text-sm text-muted mb-8">
-        Accède à ton tableau de bord.
-      </p>
+      <h1 className="text-2xl font-semibold tracking-tight mb-1">{t("signInTitle")}</h1>
+      <p className="text-sm text-muted mb-8">{t("signInSubtitle")}</p>
       <LoginForm redirectTo={redirect ?? "/dashboard"} />
       <p className="text-sm text-muted mt-6">
-        Pas encore de compte ?{" "}
+        {t("noAccount")}{" "}
         <Link href="/signup" className="text-accent hover:underline">
-          Créer un compte
+          {t("signUp")}
         </Link>
       </p>
     </div>

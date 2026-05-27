@@ -1,9 +1,11 @@
 "use client"
 
 import { useActionState } from "react"
+import { useTranslations } from "next-intl"
 import { signInAction, type AuthState } from "../actions"
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
+  const t = useTranslations("auth")
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
     signInAction,
     undefined,
@@ -12,9 +14,9 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="redirect" value={redirectTo} />
-      <Field label="Email" name="email" type="email" autoComplete="email" required />
+      <Field label={t("email")} name="email" type="email" autoComplete="email" required />
       <Field
-        label="Mot de passe"
+        label={t("password")}
         name="password"
         type="password"
         autoComplete="current-password"
@@ -30,7 +32,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         disabled={pending}
         className="w-full rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-[#1a1206] hover:brightness-110 transition disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {pending ? "Connexion…" : "Se connecter"}
+        {pending ? t("signingIn") : t("signInCta")}
       </button>
     </form>
   )
