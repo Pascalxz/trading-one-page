@@ -7,7 +7,8 @@
  * Funding rate history :
  *   https://www.okx.com/api/v5/public/funding-rate-history
  *     ?instId=BTC-USDT-SWAP&limit=100
- *   Cadence 8h. limit=100 (max). On pagine avec `before` (timestamp ms).
+ *   Cadence 8h. limit=100 (max). On pagine avec `after` (= ts du plus ancien
+ *   retourné — OKX renvoie les enregistrements plus anciens que cette borne).
  *
  * Open interest history :
  *   https://www.okx.com/api/v5/rubik/stat/contracts/open-interest-volume
@@ -36,12 +37,14 @@ type OkxFundingRow = {
 export async function fetchOkxFundingDaily(instId: string): Promise<SeriesPoint[]> {
   const byDate = new Map<string, { sum: number; count: number }>()
   const FIVE_YEARS_AGO = Date.now() - 5 * 365 * 86_400_000
-  let before: number | undefined
+  let after: number | undefined
+  let prevOldest = Infinity
   for (let page = 0; page < 200; page++) {
     const url = new URL(`${BASE}/api/v5/public/funding-rate-history`)
     url.searchParams.set("instId", instId)
     url.searchParams.set("limit", "100")
-    if (before) url.searchParams.set("before", String(before))
+    // OKX : `after` retourne les enregistrements antérieurs à ce ts (= plus anciens).
+    if (after) url.searchParams.set("after", String(after))
 
     const res = await fetch(url, { next: { revalidate: 3600 } })
     if (!res.ok) throw new Error(`OKX funding ${instId} ${res.status}`)
@@ -62,9 +65,10 @@ export async function fetchOkxFundingDaily(instId: string): Promise<SeriesPoint[
       agg.count += 1
       byDate.set(date, agg)
     }
+    if (oldest >= prevOldest) break // sécurité anti-boucle infinie
+    prevOldest = oldest
     if (oldest < FIVE_YEARS_AGO) break
-    // OKX paginate : "before" = ts du plus ancien retourné (exclus)
-    before = oldest
+    after = oldest
   }
 
   return [...byDate.entries()]

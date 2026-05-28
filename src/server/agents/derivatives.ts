@@ -10,7 +10,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/lib/types/database"
-import { fetchStooqDailyClose } from "@/lib/sources/stooq"
+import { fetchYahooDailyClose } from "@/lib/sources/yahoo"
 import { fetchDeribitDvol } from "@/lib/sources/deribit"
 import { fetchCboeSkew } from "@/lib/sources/cboe"
 import { fetchOkxFundingDaily, fetchOkxOpenInterestDaily } from "@/lib/sources/okx"
@@ -35,7 +35,7 @@ type Source = {
 
 const SOURCES: Source[] = [
   // Volatilité implicite (hors VIX qui passe par FRED)
-  { key: "stooq:MOVE",         fetcher: () => fetchStooqDailyClose("^move") },
+  { key: "yahoo:MOVE",         fetcher: () => fetchYahooDailyClose("^MOVE") },
   { key: "deribit:dvol_btc",   fetcher: () => fetchDeribitDvol("BTC") },
   { key: "deribit:dvol_eth",   fetcher: () => fetchDeribitDvol("ETH") },
   // Skew (CBOE put/call retiré : pas de CSV public stable)

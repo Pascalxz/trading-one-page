@@ -46,7 +46,7 @@ export const MACRO_DISPLAY_KEYS = [
   "cnn:fng_stocks",
   // Volatilité implicite & options
   "fred:VIXCLS",
-  "stooq:MOVE",
+  "yahoo:MOVE",
   "deribit:dvol_btc",
   "deribit:dvol_eth",
   "cboe:skew",
