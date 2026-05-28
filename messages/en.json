@@ -155,7 +155,7 @@
     "sectionDollarGold": "Dollar, gold & financial conditions",
     "sectionSentiment": "Sentiment — Fear & Greed",
     "sectionImpliedVol": "Implied volatility & options",
-    "sectionPerps": "Crypto perpetuals (Bybit)",
+    "sectionPerps": "Crypto perpetuals (OKX)",
     "sectionCot": "Institutional positioning (COT, weekly)"
   },
   "projects": {

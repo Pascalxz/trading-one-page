@@ -12,8 +12,8 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/lib/types/database"
 import { fetchStooqDailyClose } from "@/lib/sources/stooq"
 import { fetchDeribitDvol } from "@/lib/sources/deribit"
-import { fetchCboeSkew, fetchCboePcr } from "@/lib/sources/cboe"
-import { fetchBybitFundingDaily, fetchBybitOpenInterestDaily } from "@/lib/sources/bybit"
+import { fetchCboeSkew } from "@/lib/sources/cboe"
+import { fetchOkxFundingDaily, fetchOkxOpenInterestDaily } from "@/lib/sources/okx"
 import { fetchCotDisaggregatedNet, fetchCotTffNet } from "@/lib/sources/cftc"
 
 export type DerivativesResult = {
@@ -38,15 +38,13 @@ const SOURCES: Source[] = [
   { key: "stooq:MOVE",         fetcher: () => fetchStooqDailyClose("^move") },
   { key: "deribit:dvol_btc",   fetcher: () => fetchDeribitDvol("BTC") },
   { key: "deribit:dvol_eth",   fetcher: () => fetchDeribitDvol("ETH") },
-  // Skew & put/call
+  // Skew (CBOE put/call retiré : pas de CSV public stable)
   { key: "cboe:skew",          fetcher: () => fetchCboeSkew() },
-  { key: "cboe:pcr_equity",    fetcher: () => fetchCboePcr("equity") },
-  { key: "cboe:pcr_index",     fetcher: () => fetchCboePcr("index") },
-  // Perpetuals crypto
-  { key: "bybit:funding_btc",  fetcher: () => fetchBybitFundingDaily("BTCUSDT") },
-  { key: "bybit:funding_eth",  fetcher: () => fetchBybitFundingDaily("ETHUSDT") },
-  { key: "bybit:oi_btc",       fetcher: () => fetchBybitOpenInterestDaily("BTCUSDT") },
-  { key: "bybit:oi_eth",       fetcher: () => fetchBybitOpenInterestDaily("ETHUSDT") },
+  // Perpetuals crypto via OKX (Bybit géo-bloque les IP datacenter US)
+  { key: "okx:funding_btc",    fetcher: () => fetchOkxFundingDaily("BTC-USDT-SWAP") },
+  { key: "okx:funding_eth",    fetcher: () => fetchOkxFundingDaily("ETH-USDT-SWAP") },
+  { key: "okx:oi_btc",         fetcher: () => fetchOkxOpenInterestDaily("BTC") },
+  { key: "okx:oi_eth",         fetcher: () => fetchOkxOpenInterestDaily("ETH") },
   // COT (CFTC)
   { key: "cftc:cot_net_gold",  fetcher: () => fetchCotDisaggregatedNet("GOLD - COMMODITY EXCHANGE INC.") },
   { key: "cftc:cot_net_sp500", fetcher: () => fetchCotTffNet("E-MINI S&P 500 STOCK INDEX - CHICAGO MERCANTILE EXCHANGE") },

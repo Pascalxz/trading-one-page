@@ -50,13 +50,11 @@ export const MACRO_DISPLAY_KEYS = [
   "deribit:dvol_btc",
   "deribit:dvol_eth",
   "cboe:skew",
-  "cboe:pcr_equity",
-  "cboe:pcr_index",
   // Crypto perpetuals
-  "bybit:funding_btc",
-  "bybit:funding_eth",
-  "bybit:oi_btc",
-  "bybit:oi_eth",
+  "okx:funding_btc",
+  "okx:funding_eth",
+  "okx:oi_btc",
+  "okx:oi_eth",
   // COT (positionnement)
   "cftc:cot_net_gold",
   "cftc:cot_net_sp500",
