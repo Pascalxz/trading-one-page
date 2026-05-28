@@ -11,6 +11,7 @@ import type { Database } from "@/lib/types/database"
 import { computeAndStoreM2Global, type M2GlobalResult } from "./m2-global"
 import { computeAndStoreNetLiquidity, type NetLiquidityResult } from "./net-liquidity"
 import { refreshFearAndGreed, type FearGreedResult } from "./fear-greed"
+import { refreshDerivatives, type DerivativesResult } from "./derivatives"
 
 export type MacroRefreshResult = {
   ok: boolean
@@ -25,6 +26,7 @@ export type MacroRefreshResult = {
   m2_global?: M2GlobalResult
   net_liquidity?: NetLiquidityResult
   fear_greed?: FearGreedResult
+  derivatives?: DerivativesResult
 }
 
 /**
@@ -127,18 +129,39 @@ export async function refreshMacroSeries(): Promise<MacroRefreshResult> {
     }
   }
 
+  // Dérivés : volatilité implicite (Stooq MOVE, Deribit DVOL), skew/PCR CBOE,
+  // perpetuals crypto (Bybit), positionnement COT (CFTC). Best-effort.
+  let derivatives: DerivativesResult | undefined
+  try {
+    derivatives = await refreshDerivatives(supabase)
+  } catch (e) {
+    derivatives = {
+      ok: false,
+      sources: [
+        {
+          key: "derivatives",
+          fetched: 0,
+          inserted: 0,
+          error: e instanceof Error ? e.message : "derivatives fetch error",
+        },
+      ],
+    }
+  }
+
   return {
     ok:
       results.every((r) => !r.error) &&
       (m2Global?.ok ?? true) &&
       (netLiquidity?.ok ?? true) &&
-      (fearGreed?.ok ?? true),
+      (fearGreed?.ok ?? true) &&
+      (derivatives?.ok ?? true),
     series: results,
     totalInserted,
     durationMs: Date.now() - start,
     m2_global: m2Global,
     net_liquidity: netLiquidity,
     fear_greed: fearGreed,
+    derivatives,
   }
 }
 

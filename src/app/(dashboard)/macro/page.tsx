@@ -29,6 +29,24 @@ const SERIES_COLOR: Record<string, string> = {
   // Sentiment
   "altme:fng_crypto":      "#f97316",
   "cnn:fng_stocks":        "#06b6d4",
+  // Volatilité implicite & options
+  "fred:VIXCLS":           "#ef4444",
+  "stooq:MOVE":            "#dc2626",
+  "deribit:dvol_btc":      "#f59e0b",
+  "deribit:dvol_eth":      "#a855f7",
+  "cboe:skew":             "#fb923c",
+  "cboe:pcr_equity":       "#84cc16",
+  "cboe:pcr_index":        "#65a30d",
+  // Crypto perpetuals
+  "bybit:funding_btc":     "#fbbf24",
+  "bybit:funding_eth":     "#c084fc",
+  "bybit:oi_btc":          "#f59e0b",
+  "bybit:oi_eth":          "#a78bfa",
+  // COT
+  "cftc:cot_net_gold":     "#facc15",
+  "cftc:cot_net_sp500":    "#22d3ee",
+  "cftc:cot_net_usd":      "#94a3b8",
+  "cftc:cot_net_t10":      "#34d399",
 }
 
 const SECTIONS = [
@@ -60,6 +78,36 @@ const SECTIONS = [
   {
     titleKey: "sectionSentiment",
     keys: ["altme:fng_crypto", "cnn:fng_stocks"],
+  },
+  {
+    titleKey: "sectionImpliedVol",
+    keys: [
+      "fred:VIXCLS",
+      "stooq:MOVE",
+      "deribit:dvol_btc",
+      "deribit:dvol_eth",
+      "cboe:skew",
+      "cboe:pcr_equity",
+      "cboe:pcr_index",
+    ],
+  },
+  {
+    titleKey: "sectionPerps",
+    keys: [
+      "bybit:funding_btc",
+      "bybit:funding_eth",
+      "bybit:oi_btc",
+      "bybit:oi_eth",
+    ],
+  },
+  {
+    titleKey: "sectionCot",
+    keys: [
+      "cftc:cot_net_gold",
+      "cftc:cot_net_sp500",
+      "cftc:cot_net_usd",
+      "cftc:cot_net_t10",
+    ],
   },
 ] as const
 

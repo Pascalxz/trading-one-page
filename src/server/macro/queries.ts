@@ -44,6 +44,24 @@ export const MACRO_DISPLAY_KEYS = [
   // Sentiment
   "altme:fng_crypto",
   "cnn:fng_stocks",
+  // Volatilité implicite & options
+  "fred:VIXCLS",
+  "stooq:MOVE",
+  "deribit:dvol_btc",
+  "deribit:dvol_eth",
+  "cboe:skew",
+  "cboe:pcr_equity",
+  "cboe:pcr_index",
+  // Crypto perpetuals
+  "bybit:funding_btc",
+  "bybit:funding_eth",
+  "bybit:oi_btc",
+  "bybit:oi_eth",
+  // COT (positionnement)
+  "cftc:cot_net_gold",
+  "cftc:cot_net_sp500",
+  "cftc:cot_net_usd",
+  "cftc:cot_net_t10",
 ] as const
 
 export async function fetchMacroOverview(): Promise<{
