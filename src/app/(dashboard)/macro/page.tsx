@@ -31,7 +31,6 @@ const SERIES_COLOR: Record<string, string> = {
   "cnn:fng_stocks":        "#06b6d4",
   // Volatilité implicite & options
   "fred:VIXCLS":           "#ef4444",
-  "yahoo:MOVE":            "#dc2626",
   "deribit:dvol_btc":      "#f59e0b",
   "deribit:dvol_eth":      "#a855f7",
   "cboe:skew":             "#fb923c",
@@ -81,7 +80,6 @@ const SECTIONS = [
     titleKey: "sectionImpliedVol",
     keys: [
       "fred:VIXCLS",
-      "yahoo:MOVE",
       "deribit:dvol_btc",
       "deribit:dvol_eth",
       "cboe:skew",
