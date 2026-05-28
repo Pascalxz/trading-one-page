@@ -1,18 +1,11 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { getTranslations } from "next-intl/server"
 import { createClient } from "@/lib/supabase/server"
 import { Brand } from "@/components/brand"
 import { Disclaimer } from "@/components/disclaimer"
+import { LocaleSwitcher } from "@/components/locale-switcher"
 import { SignOutButton } from "./signout-button"
-
-const NAV = [
-  { href: "/dashboard", label: "Accueil" },
-  { href: "/portefeuille", label: "Portefeuille" },
-  { href: "/macro", label: "Macro" },
-  { href: "/projets", label: "Projets" },
-  { href: "/analyse", label: "Analyse" },
-  { href: "/reglages", label: "Réglages" },
-]
 
 export default async function DashboardLayout({
   children,
@@ -35,6 +28,17 @@ export default async function DashboardLayout({
     .maybeSingle()
 
   const label = profile?.display_name ?? user.email ?? ""
+  const t = await getTranslations("nav")
+  const tCommon = await getTranslations("common")
+
+  const NAV = [
+    { href: "/dashboard", label: t("home") },
+    { href: "/portefeuille", label: t("portfolio") },
+    { href: "/macro", label: t("macro") },
+    { href: "/projets", label: t("projects") },
+    { href: "/analyse", label: t("analysis") },
+    { href: "/reglages", label: t("settings") },
+  ]
 
   return (
     <>
@@ -42,15 +46,15 @@ export default async function DashboardLayout({
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-[#1a1206]"
       >
-        Aller au contenu principal
+        {tCommon("mainContent")}
       </a>
       <header className="border-b border-border bg-surface/40 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-10">
-            <Link href="/dashboard" aria-label="Accueil Liquidity Lens">
+            <Link href="/dashboard" aria-label={t("brandAria")}>
               <Brand size="sm" />
             </Link>
-            <nav aria-label="Navigation principale" className="flex items-center gap-1 text-sm">
+            <nav aria-label={t("primary")} className="flex items-center gap-1 text-sm">
               {NAV.map((item) => (
                 <Link
                   key={item.href}
@@ -63,7 +67,8 @@ export default async function DashboardLayout({
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted" aria-label="Devise de référence">
+            <LocaleSwitcher />
+            <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted" aria-label={t("currencyAria")}>
               {profile?.base_currency ?? "CAD"}
             </span>
             <span className="text-sm text-muted-strong">{label}</span>

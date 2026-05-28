@@ -8,6 +8,10 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { fetchFredObservations, type FredObservation } from "@/lib/sources/fred"
 import { requireEnv, optionalEnv } from "@/lib/env"
 import type { Database } from "@/lib/types/database"
+import { computeAndStoreM2Global, type M2GlobalResult } from "./m2-global"
+import { computeAndStoreNetLiquidity, type NetLiquidityResult } from "./net-liquidity"
+import { refreshFearAndGreed, type FearGreedResult } from "./fear-greed"
+import { refreshDerivatives, type DerivativesResult } from "./derivatives"
 
 export type MacroRefreshResult = {
   ok: boolean
@@ -19,6 +23,10 @@ export type MacroRefreshResult = {
   }[]
   totalInserted: number
   durationMs: number
+  m2_global?: M2GlobalResult
+  net_liquidity?: NetLiquidityResult
+  fear_greed?: FearGreedResult
+  derivatives?: DerivativesResult
 }
 
 /**
@@ -78,11 +86,82 @@ export async function refreshMacroSeries(): Promise<MacroRefreshResult> {
     }
   }
 
+  // Séries dérivées (best-effort, n'échoue pas tout le refresh si une plante).
+  let m2Global: M2GlobalResult | undefined
+  try {
+    m2Global = await computeAndStoreM2Global(supabase)
+  } catch (e) {
+    m2Global = {
+      ok: false,
+      computed_points: 0,
+      missing_components: [],
+      error: e instanceof Error ? e.message : "m2_global compute error",
+    }
+  }
+
+  let netLiquidity: NetLiquidityResult | undefined
+  try {
+    netLiquidity = await computeAndStoreNetLiquidity(supabase)
+  } catch (e) {
+    netLiquidity = {
+      ok: false,
+      computed_points: 0,
+      missing_components: [],
+      error: e instanceof Error ? e.message : "net_liquidity compute error",
+    }
+  }
+
+  // Fear & Greed (sources non-FRED) — best-effort.
+  let fearGreed: FearGreedResult | undefined
+  try {
+    fearGreed = await refreshFearAndGreed(supabase)
+  } catch (e) {
+    fearGreed = {
+      ok: false,
+      sources: [
+        {
+          key: "fear_greed",
+          fetched: 0,
+          inserted: 0,
+          error: e instanceof Error ? e.message : "fear_greed fetch error",
+        },
+      ],
+    }
+  }
+
+  // Dérivés : volatilité implicite (Stooq MOVE, Deribit DVOL), skew/PCR CBOE,
+  // perpetuals crypto (Bybit), positionnement COT (CFTC). Best-effort.
+  let derivatives: DerivativesResult | undefined
+  try {
+    derivatives = await refreshDerivatives(supabase)
+  } catch (e) {
+    derivatives = {
+      ok: false,
+      sources: [
+        {
+          key: "derivatives",
+          fetched: 0,
+          inserted: 0,
+          error: e instanceof Error ? e.message : "derivatives fetch error",
+        },
+      ],
+    }
+  }
+
   return {
-    ok: results.every((r) => !r.error),
+    ok:
+      results.every((r) => !r.error) &&
+      (m2Global?.ok ?? true) &&
+      (netLiquidity?.ok ?? true) &&
+      (fearGreed?.ok ?? true) &&
+      (derivatives?.ok ?? true),
     series: results,
     totalInserted,
     durationMs: Date.now() - start,
+    m2_global: m2Global,
+    net_liquidity: netLiquidity,
+    fear_greed: fearGreed,
+    derivatives,
   }
 }
 

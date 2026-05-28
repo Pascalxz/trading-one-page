@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   formatMoney,
   formatPercent,
@@ -28,6 +29,7 @@ export function HoldingsTable({
   rows: Row[]
   themes: ThemeOption[]
 }) {
+  const t = useTranslations("portfolio")
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({
     key: "market_value",
     dir: "desc",
@@ -63,7 +65,7 @@ export function HoldingsTable({
     <div className="rounded-lg border border-border bg-surface/40 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h2 className="text-xs font-mono uppercase tracking-[0.22em] text-muted">
-          Positions
+          {t("tableTitle")}
         </h2>
         {zombieCount > 0 && (
           <label className="flex items-center gap-2 text-xs text-muted-strong cursor-pointer">
@@ -73,7 +75,7 @@ export function HoldingsTable({
               onChange={(e) => setShowZombies(e.target.checked)}
               className="accent-accent"
             />
-            Afficher les {zombieCount} zombie{zombieCount > 1 ? "s" : ""}
+            {t("showZombies", { count: zombieCount })}
           </label>
         )}
       </div>
@@ -88,51 +90,51 @@ export function HoldingsTable({
                 dir={sort.dir}
                 align="left"
               >
-                Symbole
+                {t("colSymbol")}
               </Th>
-              <Th align="left">Thème</Th>
+              <Th align="left">{t("colTheme")}</Th>
               <Th
                 onClick={() => toggle(setSort, sort, "quantity")}
                 active={sort.key === "quantity"}
                 dir={sort.dir}
               >
-                Quantité
+                {t("colQuantity")}
               </Th>
-              <Th>Prix</Th>
+              <Th>{t("colPrice")}</Th>
               <Th
                 onClick={() => toggle(setSort, sort, "market_value")}
                 active={sort.key === "market_value"}
                 dir={sort.dir}
               >
-                Valeur
+                {t("colValue")}
               </Th>
               <Th
                 onClick={() => toggle(setSort, sort, "weight")}
                 active={sort.key === "weight"}
                 dir={sort.dir}
               >
-                Poids
+                {t("colWeight")}
               </Th>
               <Th
                 onClick={() => toggle(setSort, sort, "day_change_pct")}
                 active={sort.key === "day_change_pct"}
                 dir={sort.dir}
               >
-                Jour
+                {t("colDay")}
               </Th>
               <Th
                 onClick={() => toggle(setSort, sort, "unrealized_pnl")}
                 active={sort.key === "unrealized_pnl"}
                 dir={sort.dir}
               >
-                G/P
+                {t("colPnl")}
               </Th>
               <Th
                 onClick={() => toggle(setSort, sort, "unrealized_pnl_pct")}
                 active={sort.key === "unrealized_pnl_pct"}
                 dir={sort.dir}
               >
-                G/P %
+                {t("colPnlPct")}
               </Th>
             </tr>
           </thead>
@@ -149,7 +151,7 @@ export function HoldingsTable({
                     <span className="font-semibold">{row.symbol}</span>
                     {row.is_zombie && (
                       <span className="text-[10px] uppercase tracking-wider text-loss border border-loss/40 rounded px-1.5 py-0.5">
-                        zombie
+                        {t("zombieBadge")}
                       </span>
                     )}
                   </div>
@@ -196,7 +198,7 @@ export function HoldingsTable({
             {sorted.length === 0 && (
               <tr>
                 <td colSpan={9} className="px-4 py-10 text-center text-muted">
-                  Aucune position.
+                  {t("noPosition")}
                 </td>
               </tr>
             )}

@@ -1,9 +1,11 @@
 "use client"
 
 import { useActionState } from "react"
+import { useTranslations } from "next-intl"
 import { signUpAction, type AuthState } from "../actions"
 
 export function SignupForm() {
+  const t = useTranslations("auth")
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
     signUpAction,
     undefined,
@@ -11,15 +13,15 @@ export function SignupForm() {
 
   return (
     <form action={formAction} className="space-y-4">
-      <Field label="Nom affiché (optionnel)" name="display_name" type="text" />
-      <Field label="Email" name="email" type="email" autoComplete="email" required />
+      <Field label={t("displayName")} name="display_name" type="text" />
+      <Field label={t("email")} name="email" type="email" autoComplete="email" required />
       <Field
-        label="Mot de passe"
+        label={t("password")}
         name="password"
         type="password"
         autoComplete="new-password"
         required
-        hint="8 caractères minimum."
+        hint={t("passwordHint")}
       />
       {state?.error && (
         <p className="text-sm text-loss border border-loss/30 bg-loss/10 rounded-md px-3 py-2">
@@ -31,7 +33,7 @@ export function SignupForm() {
         disabled={pending}
         className="w-full rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-[#1a1206] hover:brightness-110 transition disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {pending ? "Création…" : "Créer mon compte"}
+        {pending ? t("signingUp") : t("signUpCta")}
       </button>
     </form>
   )

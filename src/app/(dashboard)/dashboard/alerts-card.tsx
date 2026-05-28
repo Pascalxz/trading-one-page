@@ -2,10 +2,14 @@
 
 import { useState, useTransition } from "react"
 import Link from "next/link"
+import { useLocale, useTranslations } from "next-intl"
 import { markAlertEventReadAction } from "@/server/alerts/actions"
 import type { AlertEventRow } from "@/server/alerts/queries"
 
 export function AlertsCard({ events }: { events: AlertEventRow[] }) {
+  const t = useTranslations("dashboard")
+  const tCommon = useTranslations("common")
+  const locale = useLocale()
   const [items, setItems] = useState(events)
   const [pending, startTransition] = useTransition()
 
@@ -15,53 +19,49 @@ export function AlertsCard({ events }: { events: AlertEventRow[] }) {
       <section className="rounded-lg border border-border bg-surface/40 p-5">
         <header className="flex items-center justify-between mb-2">
           <p className="text-xs font-mono uppercase tracking-[0.22em] text-muted">
-            Alertes
+            {t("alertsTitle")}
           </p>
           <Link
             href="/reglages"
             className="text-[11px] uppercase tracking-[0.18em] font-mono text-muted-strong hover:text-accent transition-colors"
           >
-            Gérer
+            {tCommon("manage")}
           </Link>
         </header>
-        <p className="text-sm text-muted">
-          Aucune alerte non lue. Le cron passe toutes les 4 h.
-        </p>
+        <p className="text-sm text-muted">{t("alertsNone")}</p>
       </section>
     )
   }
+
+  const localeStr = locale === "fr" ? "fr-CA" : "en-CA"
 
   return (
     <section className="rounded-lg border border-loss/30 bg-loss/5 p-5">
       <header className="flex items-center justify-between mb-3">
         <p className="text-xs font-mono uppercase tracking-[0.22em] text-loss">
-          {unread.length} alerte{unread.length > 1 ? "s" : ""} non lue
-          {unread.length > 1 ? "s" : ""}
+          {t("alertsUnread", { count: unread.length })}
         </p>
         <Link
           href="/reglages"
           className="text-[11px] uppercase tracking-[0.18em] font-mono text-muted-strong hover:text-accent transition-colors"
         >
-          Gérer
+          {tCommon("manage")}
         </Link>
       </header>
       <ul className="space-y-3">
         {unread.slice(0, 5).map((e) => (
-          <li
-            key={e.id}
-            className="rounded-md border border-border bg-surface/60 p-3"
-          >
+          <li key={e.id} className="rounded-md border border-border bg-surface/60 p-3">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-muted mb-1">
-                  {e.alert_kind === "pct_change" ? "Variation" : "Catalyseur"}{" "}
-                  · {new Date(e.triggered_at).toLocaleString("fr-CA", {
+                  {e.alert_kind === "pct_change" ? t("alertKindVariation") : t("alertKindCatalyst")}{" "}
+                  · {new Date(e.triggered_at).toLocaleString(localeStr, {
                     dateStyle: "short",
                     timeStyle: "short",
                   })}
                 </p>
                 <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                  {e.message ?? "Alerte déclenchée."}
+                  {e.message ?? ""}
                 </p>
               </div>
               <button
@@ -72,16 +72,14 @@ export function AlertsCard({ events }: { events: AlertEventRow[] }) {
                     const r = await markAlertEventReadAction(e.id)
                     if (r.ok) {
                       setItems((cur) =>
-                        cur.map((it) =>
-                          it.id === e.id ? { ...it, is_read: true } : it,
-                        ),
+                        cur.map((it) => (it.id === e.id ? { ...it, is_read: true } : it)),
                       )
                     }
                   })
                 }
                 className="text-[11px] uppercase tracking-[0.18em] font-mono text-muted hover:text-foreground transition-colors disabled:opacity-50 shrink-0"
               >
-                Lu
+                {tCommon("read")}
               </button>
             </div>
           </li>
@@ -89,8 +87,7 @@ export function AlertsCard({ events }: { events: AlertEventRow[] }) {
       </ul>
       {unread.length > 5 && (
         <p className="mt-3 text-[11px] text-muted">
-          + {unread.length - 5} autre{unread.length - 5 > 1 ? "s" : ""} dans
-          Réglages.
+          + {unread.length - 5}
         </p>
       )}
     </section>

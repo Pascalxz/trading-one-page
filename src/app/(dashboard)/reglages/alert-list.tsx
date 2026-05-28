@@ -1,6 +1,7 @@
 "use client"
 
 import { useTransition } from "react"
+import { useLocale, useTranslations } from "next-intl"
 import {
   toggleAlertAction,
   deleteAlertAction,
@@ -9,15 +10,16 @@ import {
 import type { AlertRow } from "@/server/alerts/queries"
 
 export function AlertList({ alerts }: { alerts: AlertRow[] }) {
+  const t = useTranslations("settings")
+  const tCommon = useTranslations("common")
+  const locale = useLocale()
+  const localeStr = locale === "fr" ? "fr-CA" : "en-CA"
   const [pending, startTransition] = useTransition()
 
   if (alerts.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border-strong bg-surface/40 p-5 flex items-center justify-between gap-4">
-        <p className="text-sm text-muted">
-          Aucune alerte configurée. Tu peux créer un jeu de défauts utiles en
-          un clic.
-        </p>
+        <p className="text-sm text-muted">{t("alertsEmpty")}</p>
         <button
           type="button"
           disabled={pending}
@@ -28,7 +30,7 @@ export function AlertList({ alerts }: { alerts: AlertRow[] }) {
           }
           className="rounded-md border border-accent/40 bg-accent-soft px-3 py-1.5 text-sm text-accent hover:bg-accent/20 transition disabled:opacity-60"
         >
-          {pending ? "…" : "Créer les défauts"}
+          {pending ? "…" : t("createDefaults")}
         </button>
       </div>
     )
@@ -44,28 +46,27 @@ export function AlertList({ alerts }: { alerts: AlertRow[] }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                {a.kind === "pct_change" ? "Variation %" : "Catalyseur"}
+                {a.kind === "pct_change" ? t("alertKindVariation") : t("alertKindCatalyst")}
               </span>
               {!a.is_active && (
                 <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
-                  inactif
+                  {t("inactive")}
                 </span>
               )}
             </div>
-            <p className="text-sm text-foreground">
-              {a.label ?? formatDescription(a)}
-            </p>
+            <p className="text-sm text-foreground">{a.label ?? formatDescription(a, t)}</p>
             <p className="mt-1 text-[11px] text-muted">
               {a.trigger_count > 0
-                ? `Déclenchée ${a.trigger_count} fois — dernière : ${
-                    a.last_triggered_at
-                      ? new Date(a.last_triggered_at).toLocaleString("fr-CA", {
+                ? t("triggered", {
+                    count: a.trigger_count,
+                    last: a.last_triggered_at
+                      ? new Date(a.last_triggered_at).toLocaleString(localeStr, {
                           dateStyle: "short",
                           timeStyle: "short",
                         })
-                      : "—"
-                  }`
-                : "Jamais déclenchée."}
+                      : "—",
+                  })
+                : t("neverTriggered")}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -79,20 +80,20 @@ export function AlertList({ alerts }: { alerts: AlertRow[] }) {
               }
               className="text-[11px] uppercase tracking-[0.18em] font-mono text-muted hover:text-foreground transition-colors disabled:opacity-50"
             >
-              {a.is_active ? "Désactiver" : "Activer"}
+              {a.is_active ? t("deactivate") : t("activate")}
             </button>
             <button
               type="button"
               disabled={pending}
               onClick={() => {
-                if (!confirm("Supprimer cette alerte ?")) return
+                if (!confirm(t("confirmDelete"))) return
                 startTransition(async () => {
                   await deleteAlertAction(a.id)
                 })
               }}
               className="text-[11px] uppercase tracking-[0.18em] font-mono text-muted hover:text-loss transition-colors disabled:opacity-50"
             >
-              Supprimer
+              {tCommon("delete")}
             </button>
           </div>
         </li>
@@ -101,21 +102,21 @@ export function AlertList({ alerts }: { alerts: AlertRow[] }) {
   )
 }
 
-function formatDescription(a: AlertRow): string {
+function formatDescription(a: AlertRow, t: (k: string) => string): string {
   if (a.kind === "pct_change") {
-    const t = (a.config as { threshold_pct?: number }).threshold_pct ?? 0
+    const tr = (a.config as { threshold_pct?: number }).threshold_pct ?? 0
     const scope = (a.config as { scope?: string; symbol?: string }).scope
     const sym = (a.config as { symbol?: string }).symbol
     if (scope === "symbol" && sym) {
-      return `${sym} : variation ≥ ±${t} % sur la journée`
+      return `${sym} : ±${tr} %`
     }
-    return `Toute position : variation ≥ ±${t} % sur la journée`
+    return `${t("scopeAny")} : ±${tr} %`
   }
   if (a.kind === "event_proximity") {
     const d = (a.config as { days_until?: number }).days_until ?? 0
     const kinds = (a.config as { kinds?: string[] }).kinds
-    const kindLabel = kinds?.length ? kinds.join(" / ") : "tout catalyseur"
-    return `${kindLabel} dans ≤ ${d} jour${d > 1 ? "s" : ""}`
+    const kindLabel = kinds?.length ? kinds.join(" / ") : "*"
+    return `${kindLabel} · ≤ ${d}j`
   }
   return a.kind
 }
