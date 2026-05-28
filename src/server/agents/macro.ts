@@ -10,6 +10,7 @@ import { requireEnv, optionalEnv } from "@/lib/env"
 import type { Database } from "@/lib/types/database"
 import { computeAndStoreM2Global, type M2GlobalResult } from "./m2-global"
 import { computeAndStoreNetLiquidity, type NetLiquidityResult } from "./net-liquidity"
+import { refreshFearAndGreed, type FearGreedResult } from "./fear-greed"
 
 export type MacroRefreshResult = {
   ok: boolean
@@ -23,6 +24,7 @@ export type MacroRefreshResult = {
   durationMs: number
   m2_global?: M2GlobalResult
   net_liquidity?: NetLiquidityResult
+  fear_greed?: FearGreedResult
 }
 
 /**
@@ -107,16 +109,36 @@ export async function refreshMacroSeries(): Promise<MacroRefreshResult> {
     }
   }
 
+  // Fear & Greed (sources non-FRED) — best-effort.
+  let fearGreed: FearGreedResult | undefined
+  try {
+    fearGreed = await refreshFearAndGreed(supabase)
+  } catch (e) {
+    fearGreed = {
+      ok: false,
+      sources: [
+        {
+          key: "fear_greed",
+          fetched: 0,
+          inserted: 0,
+          error: e instanceof Error ? e.message : "fear_greed fetch error",
+        },
+      ],
+    }
+  }
+
   return {
     ok:
       results.every((r) => !r.error) &&
       (m2Global?.ok ?? true) &&
-      (netLiquidity?.ok ?? true),
+      (netLiquidity?.ok ?? true) &&
+      (fearGreed?.ok ?? true),
     series: results,
     totalInserted,
     durationMs: Date.now() - start,
     m2_global: m2Global,
     net_liquidity: netLiquidity,
+    fear_greed: fearGreed,
   }
 }
 

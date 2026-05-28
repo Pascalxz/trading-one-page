@@ -26,6 +26,9 @@ const SERIES_COLOR: Record<string, string> = {
   "fred:DTWEXBGS":         "#94a3b8",
   "fred:GOLDAMGBD228NLBM": "#facc15",
   "fred:NFCI":             "#c084fc",
+  // Sentiment
+  "altme:fng_crypto":      "#f97316",
+  "cnn:fng_stocks":        "#06b6d4",
 }
 
 const SECTIONS = [
@@ -53,6 +56,10 @@ const SECTIONS = [
   {
     titleKey: "sectionDollarGold",
     keys: ["fred:DTWEXBGS", "fred:GOLDAMGBD228NLBM", "fred:NFCI"],
+  },
+  {
+    titleKey: "sectionSentiment",
+    keys: ["altme:fng_crypto", "cnn:fng_stocks"],
   },
 ] as const
 

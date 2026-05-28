@@ -41,6 +41,9 @@ export const MACRO_DISPLAY_KEYS = [
   "fred:DTWEXBGS",
   "fred:GOLDAMGBD228NLBM",
   "fred:NFCI",
+  // Sentiment
+  "altme:fng_crypto",
+  "cnn:fng_stocks",
 ] as const
 
 export async function fetchMacroOverview(): Promise<{

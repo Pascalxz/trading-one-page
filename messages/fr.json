@@ -152,7 +152,8 @@
     "upcomingNone": "Aucun événement à venir.",
     "sectionLiquidity": "Liquidité",
     "sectionRates": "Inflation & taux",
-    "sectionDollarGold": "Dollar, or & conditions financières"
+    "sectionDollarGold": "Dollar, or & conditions financières",
+    "sectionSentiment": "Sentiment — Fear & Greed"
   },
   "projects": {
     "kicker": "Projets",
