@@ -12,7 +12,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/lib/types/database"
 import { fetchDeribitDvol } from "@/lib/sources/deribit"
 import { fetchCboeSkew } from "@/lib/sources/cboe"
-import { fetchOkxFundingDaily, fetchOkxOpenInterestDaily } from "@/lib/sources/okx"
+import { fetchOkxFundingDaily, fetchOkxOpenInterestDaily, fetchOkxSpotDaily } from "@/lib/sources/okx"
 import { fetchCotDisaggregatedNet, fetchCotTffNet } from "@/lib/sources/cftc"
 
 export type DerivativesResult = {
@@ -44,6 +44,8 @@ const SOURCES: Source[] = [
   { key: "okx:funding_eth",    fetcher: () => fetchOkxFundingDaily("ETH-USDT-SWAP") },
   { key: "okx:oi_btc",         fetcher: () => fetchOkxOpenInterestDaily("BTC") },
   { key: "okx:oi_eth",         fetcher: () => fetchOkxOpenInterestDaily("ETH") },
+  // Gold spot via PAXG (FRED a discontinué GOLDAMGBD228NLBM en 2024)
+  { key: "okx:gold",           fetcher: () => fetchOkxSpotDaily("PAXG-USDT") },
   // COT (CFTC)
   { key: "cftc:cot_net_gold",  fetcher: () => fetchCotDisaggregatedNet("GOLD - COMMODITY EXCHANGE INC.") },
   { key: "cftc:cot_net_sp500", fetcher: () => fetchCotTffNet("E-MINI S&P 500 STOCK INDEX - CHICAGO MERCANTILE EXCHANGE") },

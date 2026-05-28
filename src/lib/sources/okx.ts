@@ -104,3 +104,51 @@ export async function fetchOkxOpenInterestDaily(ccy: string): Promise<SeriesPoin
     .map(([date, value]) => ({ date, value }))
     .sort((a, b) => a.date.localeCompare(b.date))
 }
+
+/**
+ * Close quotidien d'une paire spot OKX (ex: PAXG-USDT pour gold proxy).
+ *
+ * Endpoint : /api/v5/market/history-candles?instId=...&bar=1D&limit=100
+ *   - Paginate avec `after` (= ts du plus ancien, OKX renvoie les plus anciens).
+ *   - Format réponse : data = [[ts, open, high, low, close, vol, volCcy, volCcyQuote, confirm], ...]
+ *   - Historique : OKX expose typiquement ~3-4 ans en daily sur cet endpoint.
+ */
+export async function fetchOkxSpotDaily(instId: string): Promise<SeriesPoint[]> {
+  const byDate = new Map<string, number>()
+  const FIVE_YEARS_AGO = Date.now() - 5 * 365 * 86_400_000
+  let after: number | undefined
+  let prevOldest = Infinity
+  for (let page = 0; page < 100; page++) {
+    const url = new URL(`${BASE}/api/v5/market/history-candles`)
+    url.searchParams.set("instId", instId)
+    url.searchParams.set("bar", "1D")
+    url.searchParams.set("limit", "100")
+    if (after) url.searchParams.set("after", String(after))
+
+    const res = await fetch(url, { next: { revalidate: 3600 } })
+    if (!res.ok) throw new Error(`OKX candles ${instId} ${res.status}`)
+    const json = (await res.json()) as { code?: string; msg?: string; data?: string[][] }
+    if (json.code && json.code !== "0") throw new Error(`OKX candles ${instId}: ${json.msg ?? json.code}`)
+    const rows = json.data ?? []
+    if (rows.length === 0) break
+
+    let oldest = Infinity
+    for (const r of rows) {
+      if (r.length < 5) continue
+      const ts = Number(r[0])
+      const close = Number(r[4])
+      if (!Number.isFinite(ts) || !Number.isFinite(close)) continue
+      if (ts < oldest) oldest = ts
+      const date = new Date(ts).toISOString().slice(0, 10)
+      byDate.set(date, close)
+    }
+    if (oldest >= prevOldest) break
+    prevOldest = oldest
+    if (oldest < FIVE_YEARS_AGO) break
+    after = oldest
+  }
+
+  return [...byDate.entries()]
+    .map(([date, value]) => ({ date, value }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+}

@@ -40,6 +40,7 @@ export const MACRO_DISPLAY_KEYS = [
   // Dollar, or, conditions
   "fred:DTWEXBGS",
   "fred:GOLDAMGBD228NLBM",
+  "okx:gold",
   "fred:NFCI",
   // Sentiment
   "altme:fng_crypto",

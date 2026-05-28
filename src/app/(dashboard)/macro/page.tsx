@@ -25,6 +25,7 @@ const SERIES_COLOR: Record<string, string> = {
   // Dollar, or, conditions — palette neutre + or
   "fred:DTWEXBGS":         "#94a3b8",
   "fred:GOLDAMGBD228NLBM": "#facc15",
+  "okx:gold":              "#facc15",
   "fred:NFCI":             "#c084fc",
   // Sentiment
   "altme:fng_crypto":      "#f97316",
@@ -70,7 +71,7 @@ const SECTIONS = [
   },
   {
     titleKey: "sectionDollarGold",
-    keys: ["fred:DTWEXBGS", "fred:GOLDAMGBD228NLBM", "fred:NFCI"],
+    keys: ["fred:DTWEXBGS", "okx:gold", "fred:NFCI"],
   },
   {
     titleKey: "sectionSentiment",
