@@ -37,15 +37,27 @@ export async function fetchYahooDailyClose(symbol: string): Promise<YahooPoint[]
   url.searchParams.set("interval", "1d")
   url.searchParams.set("events", "history")
 
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
-      Accept: "application/json,*/*",
-    },
-    next: { revalidate: 3600 },
-  })
-  if (!res.ok) throw new Error(`Yahoo ${symbol} ${res.status}`)
+  // Yahoo throttle agressivement les IP de datacenter. Retry une fois en cas
+  // de 429 (rate limit) ou 5xx.
+  let res: Response | undefined
+  let lastStatus = 0
+  for (let attempt = 0; attempt < 3; attempt++) {
+    res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+        Accept: "application/json,*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      next: { revalidate: 3600 },
+    })
+    if (res.ok) break
+    lastStatus = res.status
+    if (res.status !== 429 && res.status < 500) break
+    // Backoff exponentiel : 2s, 5s
+    await new Promise((r) => setTimeout(r, attempt === 0 ? 2000 : 5000))
+  }
+  if (!res || !res.ok) throw new Error(`Yahoo ${symbol} ${lastStatus || res?.status}`)
   const json = (await res.json()) as YahooChartResponse
   if (json.chart?.error) {
     throw new Error(`Yahoo ${symbol}: ${json.chart.error.description}`)
